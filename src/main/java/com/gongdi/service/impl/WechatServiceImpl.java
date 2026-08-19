@@ -59,6 +59,7 @@ public class WechatServiceImpl implements IWechatService {
 
         checkWechatConfig();
 
+        // https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
         String url = CODE2SESSION_URL + "?appid=" + wechatProperties.getAppid()
                 + "&secret=" + wechatProperties.getSecret()
                 + "&js_code=" + encode(code)
@@ -97,6 +98,8 @@ public class WechatServiceImpl implements IWechatService {
         }
 
         String accessToken = getAccessToken();
+
+        // https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=ACCESS_TOKEN
         String url = PHONE_NUMBER_URL + "?access_token=" + encode(accessToken);
         String body;
         try {
@@ -176,6 +179,8 @@ public class WechatServiceImpl implements IWechatService {
         }
 
         checkWechatConfig();
+
+        // https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET
         String url = ACCESS_TOKEN_URL + "?grant_type=client_credential"
                 + "&appid=" + encode(wechatProperties.getAppid())
                 + "&secret=" + encode(wechatProperties.getSecret());

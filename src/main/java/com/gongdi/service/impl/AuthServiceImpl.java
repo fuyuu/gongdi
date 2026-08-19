@@ -188,18 +188,27 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    public WxSessionVO loginByCodeId(String loginQuickCode) {
-
+    public WxSessionVO loginByCodeId(String loginCode) {
+        if(StrUtils.isBlank(loginCode)){
+            return WxSessionVO.builder().errmsg("登录loginCode不能为空,没有获得微信小程序的登录code").build();
+        }
         return null;
     }
 
     @Override
     public void sendPhoneCode(String phone) {
-
+        if(StrUtils.isBlank(phone)){
+            log.info("手机号不能为空");
+//            return WxSessionVO.builder().errmsg("手机号不能为空").build();
+        }
     }
 
     @Override
     public void verifyPhoneCode(String phone, String code) {
+        if(StrUtils.isBlank(phone)||StrUtils.isBlank(code)){
+            log.info("手机号或验证码不能为空");
+//            return WxSessionVO.builder().errmsg("手机号或验证码不能为空").build();
+        }
 
     }
 }
