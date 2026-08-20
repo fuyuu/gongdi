@@ -46,7 +46,6 @@ public class Result<T> {
     public static <T> Result<T> success(T data, String msg) {
         return new Result<>(0, msg, data);
     }
-
     /**
      * 失败响应
      * @param resultCode 结果码枚举

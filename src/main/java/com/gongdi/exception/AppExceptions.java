@@ -1,13 +1,15 @@
 package com.gongdi.exception;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 基础异常类，所有自定义异常都应继承自该类
  * @author Ma Qiang
  * @since 2026/8/13
  */
-@Getter
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class AppExceptions extends RuntimeException {
     
     private static final long serialVersionUID = 5317680961212299217L;

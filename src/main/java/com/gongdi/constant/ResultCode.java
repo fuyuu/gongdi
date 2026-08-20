@@ -16,7 +16,8 @@ public enum ResultCode {
     FORBIDDEN(403, "权限不足"),
     NOT_FOUND(404, "资源不存在"),
     SYSTEM_ERROR(500, "系统异常"),
-    WECHAT_LOGIN_ERROR(4001, "微信登录失败");
+    WECHAT_LOGIN_ERROR(4001, "微信登录失败"),
+    DUPLICATE_KEY_ERROR(405,"数据库唯一冲突异常");
 
     private final Integer code;
     private final String msg;
