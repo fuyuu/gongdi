@@ -24,8 +24,4 @@ public class WechatProperties {
      */
     private String secret;
 
-    /**
-     * 是否开启 mock 模式（跳过 jscode2session 联网，按 code 派生 openid）
-     */
-    private boolean mockEnabled = false;
 }

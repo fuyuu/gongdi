@@ -14,4 +14,12 @@ public class SystemException extends BaseException {
     public SystemException(String message, Object... args) {
         super(String.format(message, args));
     }
+
+    public SystemException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public SystemException(Throwable cause) {
+        super(cause);
+    }
 }

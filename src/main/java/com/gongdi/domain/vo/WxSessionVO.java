@@ -29,17 +29,8 @@ public class WxSessionVO {
     private String sessionKey;
 
     /**
-     * 用户在开放平台的唯一标识
+     * 用户在微信开放平台的唯一标识（可选返回）
+     * 仅当小程序绑定微信开放平台账号后，才会返回该字段
      */
     private String unionid;
-
-    /**
-     * 错误码，成功时无此字段
-     */
-    private Integer errcode;
-
-    /**
-     * 错误信息
-     */
-    private String errmsg;
 }

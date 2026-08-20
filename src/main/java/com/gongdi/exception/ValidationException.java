@@ -10,4 +10,15 @@ public class ValidationException extends BaseException {
     public ValidationException(String message) {
         super(message);
     }
+    public ValidationException(String message, Object... args) {
+        super(String.format(message, args));
+    }
+
+    public ValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ValidationException(Throwable cause) {
+        super(cause);
+    }
 }

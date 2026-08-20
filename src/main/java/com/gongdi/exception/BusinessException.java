@@ -14,4 +14,12 @@ public class BusinessException extends BaseException {
     public BusinessException(String message, Object... args) {
         super(String.format(message, args));
     }
+
+    public BusinessException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BusinessException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -52,11 +52,6 @@ public class WechatServiceImpl implements IWechatService {
      */
     @Override
     public WxSessionVO code2session(String code) {
-        // 本地开发/测试：跳过联网，按 code 派生 openid，便于无 appid/secret 时联调
-        if (wechatProperties.isMockEnabled()) {
-            return new WxSessionVO("openid-" + code, null, null, null, null);
-        }
-
         checkWechatConfig();
 
         // https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
