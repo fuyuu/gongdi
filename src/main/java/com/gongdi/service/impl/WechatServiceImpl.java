@@ -1,6 +1,9 @@
 package com.gongdi.service.impl;
 
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.JSON;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.yulichang.toolkit.StrUtils;
 import com.gongdi.config.WechatProperties;
 import com.gongdi.constant.ResultCode;
 import com.gongdi.exception.BusinessException;
@@ -8,11 +11,15 @@ import com.gongdi.exception.SystemException;
 import com.gongdi.domain.vo.WxAccessTokenVO;
 import com.gongdi.domain.vo.WxPhoneNumberVO;
 import com.gongdi.domain.vo.WxSessionVO;
+import com.gongdi.exception.WechatException;
+import com.gongdi.mapper.UserMapper;
 import com.gongdi.service.IWechatService;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -43,39 +50,43 @@ public class WechatServiceImpl implements IWechatService {
     private static final long ACCESS_TOKEN_SAFE_WINDOW_MILLIS = 300_000L;
 
     private final WechatProperties wechatProperties;
+    private final UserMapper userMapper;
+
     private final ObjectMapper objectMapper;
+
+    @Resource
+    private RestTemplate restTemplate;
+
     private volatile String cachedAccessToken;
     private volatile long accessTokenExpiresAt;
+
 
     /**
      * 调用微信 jscode2session 换取 openid，mock 模式下跳过联网。
      */
     @Override
     public WxSessionVO code2session(String code) {
+        // 1. 参数校验：code,config为空，抛参数异常
+        checkLoginCode(code);
         checkWechatConfig();
 
-        // https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
-        String url = CODE2SESSION_URL + "?appid=" + wechatProperties.getAppid()
-                + "&secret=" + wechatProperties.getSecret()
-                + "&js_code=" + encode(code)
-                + "&grant_type=authorization_code";
+        // 2. 调用微信接口
+        String wxUrl = String.format(
+                "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
+                wechatProperties.getAppid(), wechatProperties.getSecret(), code
+        );
+        String response = restTemplate.getForObject(wxUrl, String.class);
+        JSONObject wxResult = JSON.parseObject(response);
 
-        String body = doGet(url, "微信 jscode2session");
-
-        WxSessionVO session;
-        try {
-            session = objectMapper.readValue(body, WxSessionVO.class);
-        } catch (Exception e) {
-            log.error("微信 jscode2session 响应解析失败: {}", body);
-            throw new SystemException("微信登录响应解析失败");
+        // 3. 微信接口返回错误，抛微信专属异常
+        if (wxResult.containsKey("errcode")) {
+            String wxErrCode = wxResult.getString("errcode");
+            String errMsg = wxResult.getString("errmsg");
+            throw new WechatException(50010, "微信登录失败：" + errMsg+"错误码"+ wxErrCode);
         }
+        String openid = wxResult.getString("openid");
 
-        if (session == null || !StringUtils.hasText(session.getOpenid())) {
-            String errmsg = session != null && session.getErrmsg() != null ? session.getErrmsg() : "未知错误";
-            log.warn("微信登录失败: {}", errmsg);
-            throw new BusinessException(ResultCode.WECHAT_LOGIN_ERROR.getMsg() + "：" + errmsg);
-        }
-        return session;
+        return wxResult.toJavaObject(WxSessionVO.class);
     }
 
     /**
@@ -205,8 +216,13 @@ public class WechatServiceImpl implements IWechatService {
      * 校验微信真实接口所需配置，避免空配置请求外部接口。
      */
     private void checkWechatConfig() {
-        if (!StringUtils.hasText(wechatProperties.getAppid()) || !StringUtils.hasText(wechatProperties.getSecret())) {
+        if (StrUtils.isBlank(wechatProperties.getAppid())||StrUtils.isBlank(wechatProperties.getSecret())) {
             throw new SystemException("微信小程序 appid/secret 未配置");
+        }
+    }
+    private void checkLoginCode(String code) {
+        if (StrUtils.isBlank(code)) {
+            throw new SystemException("微信登录临时 code 不能为空");
         }
     }
 

@@ -1,20 +1,23 @@
 package com.gongdi.interceptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gongdi.constant.ResultCode;
-import com.gongdi.domain.vo.Result;
 import com.gongdi.util.JwtTokenUtils;
 import com.gongdi.util.ThreadLocalUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 登录拦截器，校验 Authorization 请求头中的 JWT 并解析当前用户。
@@ -24,47 +27,61 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class LoginInterceptor implements HandlerInterceptor {
 
-    private final ObjectMapper objectMapper;
-
     /**
-     * 预处理回调，在控制器处理请求之前校验登录态
+     * 预处理回调方法，在控制器处理请求之前调用
+     * @param request HTTP请求对象
+     * @param response HTTP响应对象
+     * @param handler 处理请求的处理器对象
+     * @return 如果返回true，则继续处理请求；如果返回false，则中断请求处理流程
      */
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler) {
+        log.info("IP: {} 正在尝试访问 {}", request.getRemoteAddr(), request.getRequestURI());
         String authorization = request.getHeader("Authorization");
-        // 兼容 SSE / 无法携带请求头场景，支持 ?token= 参数
         if (authorization == null || authorization.trim().isEmpty()) {
             String urlToken = request.getParameter("token");
             if (urlToken != null && !urlToken.trim().isEmpty()) {
                 authorization = "Bearer " + urlToken;
             }
         }
-        try {
+        try{
             if (authorization == null || !authorization.startsWith("Bearer ")) {
                 throw new RuntimeException("无效的Token");
             }
             String token = authorization.substring(7).trim();
             Claims claims = JwtTokenUtils.getClaimsFromToken(token, JwtTokenUtils.ACCESS_TOKEN_SECRET);
             ThreadLocalUtils.set(claims);
+
+            // 解析角色并设置到Spring Security上下文
+            Integer role = claims.get("role", Integer.class);
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            if (role != null) {
+                if (role == 0) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
+                } else if (role == 1) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                }
+            }
+            log.info("用户{}---角色: {}", claims.get("userId"), authorities);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(claims.get("userId"), null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
             return true;
-        } catch (Exception e) {
-            log.error("JWT令牌解析失败---未登录: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.getWriter().write(objectMapper.writeValueAsString(Result.fail(ResultCode.UNAUTHORIZED)));
+        }catch (Exception e){
+            log.error("JWT令牌解析失败---未登录", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return false;
         }
     }
 
-    /**
-     * 请求完成后清理线程本地变量，避免线程复用导致用户串号
-     */
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull Object handler, Exception ex) {
         ThreadLocalUtils.remove();
+        SecurityContextHolder.clearContext();
     }
+
 }
+

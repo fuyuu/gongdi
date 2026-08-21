@@ -9,10 +9,23 @@ spring:
   config:
     import: optional:file:./application-local.properties
   datasource:
-    url: ${DB_URL:jdbc:mysql://49.235.164.243:3306/construction?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://49.235.164.243:3306/gongdi?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:gongdi}
     password: ${DB_PASSWORD:8wSXGhpxS6Xz6MmF}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:49.235.164.243}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:hope123gty}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:10s}
+      lettuce:
+        pool:
+          max-active: ${REDIS_POOL_MAX_ACTIVE:8}
+          max-idle: ${REDIS_POOL_MAX_IDLE:8}
+          min-idle: ${REDIS_POOL_MIN_IDLE:0}
+          max-wait: ${REDIS_POOL_MAX_WAIT:-1ms}
 
 wechat:
   appid: ${appid:wx44e6d6dfa6d18250}
@@ -20,8 +33,10 @@ wechat:
   mock-enabled: ${WECHAT_MOCK_ENABLED:false}
 
 sms:
-  template-url: ${SMS_TEMPLATE_URL:https://push.spug.cc/sms/WwdMZaJrSjS1Y1JjIDST3w}
+  base-url: ${SMS_BASE_URL:https://push.spug.cc/sms}
+  template-code: ${SMS_TEMPLATE_CODE:WwdMZaJrSjS1Y1JjIDST3w}
   code-ttl-minutes: ${SMS_CODE_TTL_MINUTES:15}
   resend-interval-seconds: ${SMS_RESEND_INTERVAL_SECONDS:60}
+  code-length: ${SMS_CODE_LENGTH:6}
   mock-enabled: ${SMS_MOCK_ENABLED:false}
   fixed-code: ${SMS_FIXED_CODE:}

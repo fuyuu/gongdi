@@ -24,4 +24,9 @@ public class WechatProperties {
      */
     private String secret;
 
+    /**
+     * mock 模式开关：开启后不联网调用微信接口，便于本地联调
+     */
+    private boolean mockEnabled;
+
 }

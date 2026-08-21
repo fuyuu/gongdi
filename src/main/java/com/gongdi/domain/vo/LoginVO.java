@@ -25,19 +25,7 @@ public class LoginVO {
     private String refreshToken;
 
     /**
-     * 令牌类型
+     * 是否新用户（首次登录注册），用于前端判断是否需要引导填写资料
      */
-    private String tokenType;
-
-    /**
-     * 当前用户信息
-     */
-    private UserVO user;
-
-    /**
-     * 兼容早期只返回 accessToken 的测试和调用点，新登录链路优先使用四参构造。
-     */
-    public LoginVO(String accessToken, String tokenType, UserVO user) {
-        this(accessToken, null, tokenType, user);
-    }
+    private Boolean isNewUser;
 }

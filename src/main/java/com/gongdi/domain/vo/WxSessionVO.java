@@ -33,4 +33,14 @@ public class WxSessionVO {
      * 仅当小程序绑定微信开放平台账号后，才会返回该字段
      */
     private String unionid;
+
+    /**
+     * 错误码（登录失败时返回）
+     */
+    private Integer errcode;
+
+    /**
+     * 错误信息（登录失败时返回）
+     */
+    private String errmsg;
 }

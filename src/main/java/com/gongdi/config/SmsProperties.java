@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * 短信验证码配置，集中管理 Spug 短信模板、验证码有效期和本地 mock 开关。
+ *
+ * @author Ma Qiang
+ * @since 2026/8/13
  */
 @Data
 @Component
@@ -13,9 +16,14 @@ import org.springframework.stereotype.Component;
 public class SmsProperties {
 
     /**
-     * Spug 短信模板地址，发送器会在后面追加 to、code、number 参数。
+     * Spug 短信网关基础地址，发送时拼接 /{templateCode}。
      */
-    private String templateUrl = "https://push.spug.cc/sms/WwdMZaJrSjS1Y1JjIDST3w";
+    private String baseUrl = "https://push.spug.cc/sms";
+
+    /**
+     * Spug 短信模板编码，作为 URL 路径参数，由业务配置决定。
+     */
+    private String templateCode = "WwdMZaJrSjS1Y1JjIDST3w";
 
     /**
      * 验证码有效分钟数，对应短信模板中的 number 参数。
@@ -26,6 +34,11 @@ public class SmsProperties {
      * 同一手机号重复发送验证码的最小间隔秒数，防止用户连续点击。
      */
     private int resendIntervalSeconds = 60;
+
+    /**
+     * 验证码长度，默认 6 位数字。
+     */
+    private int codeLength = 6;
 
     /**
      * 本地 mock 开关，开启后只生成并保存验证码，不真实调用短信网关。

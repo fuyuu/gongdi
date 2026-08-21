@@ -1,5 +1,8 @@
 package com.gongdi.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,9 +18,11 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@TableName("sys_user")
 public class SysUser {
 
     /** 主键 */
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 姓名 */
@@ -26,20 +31,13 @@ public class SysUser {
     /** 微信 openid */
     private String openid;
 
+    private String unionid;
+
     /** 头像 */
     private String avatar;
 
-    /** 手机号 */
-    private String phone;
-
-    /** 角色（前端展示用） */
-    private String role;
-
-    /** 岗位 */
-    private String position;
-
-    /** 当前项目名称 */
-    private String currentProject;
+    /** 角色：1-用户，2-项目管理员，3-系统管理员，4-该用户禁止使用 */
+    private Integer role;
 
     /** 状态：1 正常，0 停用 */
     private Integer status;

@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class AppExceptions extends RuntimeException {
+public class WechatException extends RuntimeException {
     
     private static final long serialVersionUID = 5317680961212299217L;
     
@@ -26,7 +26,7 @@ public class AppExceptions extends RuntimeException {
     /**
      * 只传错误信息，默认错误码 500
      */
-    public AppExceptions(String msg) {
+    public WechatException(String msg) {
         super(msg);
         this.code = 500;
         this.msg = msg;
@@ -34,7 +34,7 @@ public class AppExceptions extends RuntimeException {
     /**
      * 传错误码 + 错误信息（最常用）
      */
-    public AppExceptions(Integer code, String msg) {
+    public WechatException(Integer code, String msg) {
         super(msg);
         this.code = code;
         this.msg = msg;
@@ -42,7 +42,7 @@ public class AppExceptions extends RuntimeException {
     /**
      * 传错误码 + 错误信息 + 原始异常（包装底层异常时用）
      */
-    public AppExceptions(Integer code, String msg, Throwable cause) {
+    public WechatException(Integer code, String msg, Throwable cause) {
         super(msg, cause);
         this.code = code;
         this.msg = msg;

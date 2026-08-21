@@ -18,11 +18,12 @@ public class WebConfig implements WebMvcConfigurer {
     private final LoginInterceptor loginInterceptor;
 
     /**
-     * 注册登录拦截器，手机号登录接口与错误页放行
+     * 注册登录拦截器，认证相关接口与错误页放行。
+     * 所有 /api/auth/** 均为登录/刷新等公开接口，无需鉴权。
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
-                .excludePathPatterns("/api/auth/wx-phone-login", "/api/auth/web-login", "/api/send-sms", "/api/wx-sms-login", "/error");
+                .excludePathPatterns("/auth/**", "/error");
     }
 }
