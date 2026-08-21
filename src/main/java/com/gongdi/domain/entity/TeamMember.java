@@ -10,16 +10,16 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 /**
- * 项目成员实体，对应 project_member 表。
+ * 班组成员实体，对应 team_member 表。
  *
  * @author Ma Qiang
- * @since 2026/8/19
+ * @since 2026/8/21
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("project_member")
-public class ProjectMember {
+@TableName("team_member")
+public class TeamMember {
 
     /** 主键，数据库自增 */
     @TableId(type = IdType.AUTO)
@@ -28,14 +28,17 @@ public class ProjectMember {
     /** 项目 ID */
     private Long projectId;
 
+    /** 班组 ID */
+    private Long teamId;
+
     /** 用户 ID */
     private Long userId;
 
-    /** 角色编码：BOSS / MANAGER / TEAM_LEADER / WORKER / FINANCE */
-    private String roleCode;
-
-    /** 进场日期 */
+    /** 加入班组日期 */
     private LocalDate joinDate;
+
+    /** 离开班组日期 */
+    private LocalDate leaveDate;
 
     /** 状态：ACTIVE / LEFT */
     private String status;

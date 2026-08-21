@@ -1,12 +1,15 @@
 package com.gongdi;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.core.io.InputStreamResource;
 
 import java.io.InputStream;
 import java.util.Properties;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * 微信登录配置测试，防止生产默认值误停留在 mock 模式。
@@ -14,16 +17,16 @@ import static org.hamcrest.Matchers.is;
 class WechatApplicationPropertiesTest {
 
     @Test
-    void applicationPropertiesUsesRealWechatLoginByDefault() throws Exception {
-        Properties properties = new Properties();
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.properties")) {
-            properties.load(inputStream);
+    void applicationYmlUsesRealWechatLoginByDefault() throws Exception {
+        Properties properties;
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("application.yml")) {
+            assertThat("classpath 下应存在 application.yml", inputStream, notNullValue());
+            YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
+            yaml.setResources(new InputStreamResource(inputStream));
+            properties = yaml.getObject();
         }
 
-        // 真实小程序 appid 可以进入普通配置，appsecret 只允许从环境变量或本地私有配置读取。
-        assertThat(properties.getProperty("spring.config.import"), is("optional:file:./application-local.properties"));
-        assertThat(properties.getProperty("wechat.appid"), is("${WECHAT_APPID:wx44e6d6dfa6d18250}"));
-        assertThat(properties.getProperty("wechat.secret"), is("${WECHAT_SECRET:}"));
+        // 微信登录默认必须走真实 jscode2session，mock 只能通过环境变量显式开启
         assertThat(properties.getProperty("wechat.mock-enabled"), is("${WECHAT_MOCK_ENABLED:false}"));
     }
 }

@@ -11,7 +11,7 @@
  Target Server Version : 80410 (8.4.10)
  File Encoding         : 65001
 
- Date: 20/08/2026 22:50:26
+ Date: 21/08/2026 20:50:31
 */
 
 SET NAMES utf8mb4;
@@ -133,6 +133,27 @@ CREATE TABLE `daily_report`
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '施工日报' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for enterprise
+-- ----------------------------
+DROP TABLE IF EXISTS `enterprise`;
+CREATE TABLE `enterprise`
+(
+    `id`              bigint                                                       NOT NULL,
+    `enterprise_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '企业名称',
+    `enterprise_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci  NOT NULL COMMENT '企业编号',
+    `contact_person`  varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '联系人',
+    `contact_phone`   varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '联系电话',
+    `address`         varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '企业地址',
+    `status`          varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE/DISABLED',
+    `create_time`     datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`     datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted`         tinyint                                                      NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_enterprise_code`(`enterprise_code` ASC) USING BTREE,
+    INDEX             `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '企业表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for expense
 -- ----------------------------
 DROP TABLE IF EXISTS `expense`;
@@ -189,8 +210,9 @@ CREATE TABLE `loan`
 DROP TABLE IF EXISTS `project`;
 CREATE TABLE `project`
 (
-    `id`           bigint                                                        NOT NULL,
-    `project_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '项目名称',
+    `id`            bigint                                                        NOT NULL,
+    `enterprise_id` bigint NULL DEFAULT NULL COMMENT '所属企业ID',
+    `project_name`  varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '项目名称',
     `project_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '项目编号',
     `address`      varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '项目地址',
     `manager_id`   bigint NULL DEFAULT NULL COMMENT '项目负责人',
@@ -205,6 +227,7 @@ CREATE TABLE `project`
     `deleted`      tinyint                                                       NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `uk_project_code`(`project_code` ASC) USING BTREE,
+    INDEX          `idx_enterprise`(`enterprise_id` ASC) USING BTREE,
     INDEX          `idx_manager`(`manager_id` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '项目表' ROW_FORMAT = Dynamic;
 
@@ -233,23 +256,15 @@ CREATE TABLE `project_income`
 DROP TABLE IF EXISTS `project_member`;
 CREATE TABLE `project_member`
 (
-    `id`          bigint                                                       NOT NULL,
-    `project_id`  bigint                                                       NOT NULL,
-    `user_id`     bigint                                                       NOT NULL,
-    `team_id`     bigint NULL DEFAULT NULL,
-    `role_code`   varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'WORKER' COMMENT 'BOSS/MANAGER/TEAM_LEADER/WORKER/FINANCE',
-    `work_type`   varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '工种',
-    `join_date`   date NULL DEFAULT NULL COMMENT '进场日期',
-    `leave_date`  date NULL DEFAULT NULL COMMENT '离场日期',
-    `status`      tinyint                                                      NOT NULL DEFAULT 1,
-    `create_time` datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `update_time` datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `deleted`     tinyint                                                      NOT NULL DEFAULT 0,
+    `id`         bigint NOT NULL AUTO_INCREMENT,
+    `project_id` bigint NOT NULL,
+    `user_id`    bigint NOT NULL,
+    `role_code`  varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+    `join_date`  date NULL DEFAULT NULL,
+    `status`     varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE,
-    UNIQUE INDEX `uk_project_user`(`project_id` ASC, `user_id` ASC) USING BTREE,
-    INDEX         `idx_user`(`user_id` ASC) USING BTREE,
-    INDEX         `idx_team`(`team_id` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '项目成员' ROW_FORMAT = Dynamic;
+    UNIQUE INDEX `uk_project_user`(`project_id` ASC, `user_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for project_team
@@ -257,17 +272,20 @@ CREATE TABLE `project_member`
 DROP TABLE IF EXISTS `project_team`;
 CREATE TABLE `project_team`
 (
-    `id`          bigint                                                        NOT NULL,
+    `id`          bigint                                                        NOT NULL AUTO_INCREMENT,
     `project_id`  bigint                                                        NOT NULL COMMENT '项目ID',
-    `team_name`   varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '班组名称',
-    `leader_id`   bigint NULL DEFAULT NULL COMMENT '班组长',
-    `work_type`   varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '工种',
+    `team_name`   varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '班组名称',
+    `work_type`   varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '工种',
+    `leader_id`   bigint NULL DEFAULT NULL COMMENT '班组负责人',
+    `status`      tinyint                                                       NOT NULL DEFAULT 1 COMMENT '1正常 0停用',
     `create_time` datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted`     tinyint                                                       NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`) USING BTREE,
-    INDEX         `idx_project`(`project_id` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '项目班组' ROW_FORMAT = Dynamic;
+    UNIQUE INDEX `uk_project_team_name`(`project_id` ASC, `team_name` ASC) USING BTREE,
+    INDEX         `idx_project`(`project_id` ASC) USING BTREE,
+    INDEX         `idx_leader`(`leader_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '项目班组' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for sys_user
@@ -278,12 +296,13 @@ CREATE TABLE `sys_user`
     `id`          bigint                                                       NOT NULL,
     `name`        varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '姓名',
     `openid`      varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '微信openid',
+    `unionid`     varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'unionid',
     `avatar`      varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像',
     `status`      tinyint                                                      NOT NULL DEFAULT 1 COMMENT '1正常 0停用',
     `create_time` datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time` datetime                                                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted`     tinyint                                                      NOT NULL DEFAULT 0,
-    `role`        int NULL DEFAULT NULL COMMENT '1-用户 ,2-项目管理员, 3-系统管理员,4-该用户禁止使用',
+    `role`        int NULL DEFAULT NULL COMMENT '1-用户 ,2-系统管理员,4-该用户禁止使用',
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `uk_openid`(`openid` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
@@ -300,6 +319,25 @@ CREATE TABLE `sys_user_phone`
     `status`  int NULL DEFAULT NULL,
     PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for team_member
+-- ----------------------------
+DROP TABLE IF EXISTS `team_member`;
+CREATE TABLE `team_member`
+(
+    `id`         bigint NOT NULL AUTO_INCREMENT,
+    `project_id` bigint NOT NULL COMMENT '项目ID',
+    `team_id`    bigint NOT NULL COMMENT '班组ID',
+    `user_id`    bigint NOT NULL COMMENT '用户ID',
+    `join_date`  date NULL DEFAULT NULL COMMENT '加入班组日期',
+    `leave_date` date NULL DEFAULT NULL COMMENT '离开班组日期',
+    `status`     varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'ACTIVE',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE INDEX `uk_team_user`(`team_id` ASC, `user_id` ASC) USING BTREE,
+    INDEX        `idx_project_user`(`project_id` ASC, `user_id` ASC) USING BTREE,
+    INDEX        `idx_project_team`(`project_id` ASC, `team_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '班组成员' ROW_FORMAT = Dynamic;
 
 SET
 FOREIGN_KEY_CHECKS = 1;

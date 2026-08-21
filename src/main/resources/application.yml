@@ -1,3 +1,9 @@
+server:
+  port: 8080
+  servlet:
+    # 统一接口前缀：小程序端与 ApiUtf8ResponseFilter 均按 /api 访问，Controller 内不再重复书写
+    context-path: /api
+
 spring:
   application:
     name: gongdi

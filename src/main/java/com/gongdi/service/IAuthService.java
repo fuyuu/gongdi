@@ -1,5 +1,6 @@
 package com.gongdi.service;
 
+import com.gongdi.domain.dto.WxSmsLoginDTO;
 import com.gongdi.domain.vo.LoginVO;
 import com.gongdi.domain.vo.WxSessionVO;
 
@@ -37,15 +38,24 @@ public interface IAuthService {
     /**
      * 小程序手机号登录（预留，暂未实现）。
      */
-    WxSessionVO loginByPhone(String loginCode, String phone, String code);
+    LoginVO loginByPhone(String loginCode, String phone, String code);
 
     /**
-     * 发送手机验证码（预留，暂未实现）。
+     * 短信验证码登录：先校验用户输入的验证码与 Redis 中存储的是否一致，
+     * 通过后再用 loginCode 走微信登录（换 openid、注册、绑定手机号），最后签发双 token。
+     *
+     * @param dto 登录请求（loginCode、phone、smsCode）
+     * @return 登录结果（accessToken、refreshToken、是否新用户）
+     */
+    LoginVO smsLogin(WxSmsLoginDTO dto);
+
+    /**
+     * 发送手机验证码。
      */
     void sendPhoneCode(String phone);
 
     /**
-     * 校验手机验证码（预留，暂未实现）。
+     * 校验手机验证码。
      */
     void verifyPhoneCode(String phone, String code);
 

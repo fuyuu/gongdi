@@ -36,7 +36,7 @@ public class SysUser {
     /** 头像 */
     private String avatar;
 
-    /** 角色：1-用户，2-项目管理员，3-系统管理员，4-该用户禁止使用 */
+    /** 角色：1-用户，2-系统管理员，4-该用户禁止使用 */
     private Integer role;
 
     /** 状态：1 正常，0 停用 */

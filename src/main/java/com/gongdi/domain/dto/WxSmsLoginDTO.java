@@ -1,12 +1,15 @@
 package com.gongdi.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * 微信短信验证码登录请求对象，字段名与小程序端契约保持一致。
  */
 @Data
+@AllArgsConstructor
+
 public class WxSmsLoginDTO {
 
     /**

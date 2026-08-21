@@ -2,6 +2,7 @@ package com.gongdi.controller;
 
 import com.gongdi.domain.dto.RefreshTokenDTO;
 import com.gongdi.domain.dto.WxLoginDTO;
+import com.gongdi.domain.dto.WxSmsLoginDTO;
 import com.gongdi.domain.vo.LoginVO;
 import com.gongdi.domain.vo.Result;
 import com.gongdi.domain.vo.WxSessionVO;
@@ -54,13 +55,23 @@ public class AuthController {
     }
 
     /**
+     * 短信验证码登录：先校验手机验证码与 Redis 中存储的是否一致，
+     * 通过后用 loginCode 走微信登录并绑定手机号，返回双 token。
+     */
+    @PostMapping("/wx-sms-login")
+    public Result<LoginVO> smsLogin(@RequestBody WxSmsLoginDTO dto) {
+        LoginVO loginVO = authService.smsLogin(dto);
+        return Result.success(loginVO);
+    }
+
+    /**
      * 小程序手机号登录：loginCode 换微信身份，phoneCode 换手机号，后端完成手机号账号绑定。
      */
     @PostMapping("/wx-phone-login")
-    public Result<WxSessionVO> wxPhoneLogin(@RequestParam String loginCode,
+    public Result<LoginVO> wxPhoneLogin(@RequestParam String loginCode,
                                             @RequestParam String phone,
                                             @RequestParam String code) {
-        WxSessionVO wxSessionVO = authService.loginByPhone(loginCode, phone, code);
+        LoginVO wxSessionVO = authService.loginByPhone(loginCode, phone, code);
         return Result.success(wxSessionVO);
     }
 

@@ -59,7 +59,7 @@ public class SysUserServiceImpl extends ServiceImpl<UserMapper, SysUser> impleme
         ProjectMember member = projectMemberService.getOne(
                 new LambdaQueryWrapper<ProjectMember>()
                         .eq(ProjectMember::getUserId, userId)
-                        .eq(ProjectMember::getStatus, 1)
+                        .eq(ProjectMember::getStatus, "ACTIVE")
                         .last("LIMIT 1"));
         if (member != null) {
             vo.setPosition(resolveRoleLabel(member.getRoleCode()));

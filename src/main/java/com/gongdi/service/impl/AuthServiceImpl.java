@@ -4,6 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.gongdi.config.SmsProperties;
+import com.gongdi.domain.dto.WxSmsLoginDTO;
 import com.gongdi.domain.entity.SysUser;
 import com.gongdi.domain.entity.SysUserPhone;
 import com.gongdi.domain.vo.LoginVO;
@@ -177,9 +178,89 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    public WxSessionVO loginByPhone(String loginCode, String phone, String code) {
+    public LoginVO loginByPhone(String loginCode, String phone, String code) {
         // 手机号登录涉及 getPhoneNumber 与手机号绑定，尚未实现
-        throw new BusinessException("手机号登录暂未实现");
+        return smsLogin(new WxSmsLoginDTO(loginCode,phone,code));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public LoginVO smsLogin(WxSmsLoginDTO dto) {
+        String phone = dto.getPhone();
+        String smsCode = dto.getSmsCode();
+
+        // 1. 参数校验
+        if (StrUtils.isBlank(phone)) {
+            throw new BusinessException("手机号不能为空");
+        }
+        if (!phone.matches("^1\\d{10}$")) {
+            throw new BusinessException("手机号格式不正确");
+        }
+        if (StrUtils.isBlank(smsCode)) {
+            throw new BusinessException("验证码不能为空");
+        }
+        if (StrUtils.isBlank(dto.getLoginCode())) {
+            throw new BusinessException("登录凭证不能为空");
+        }
+
+        // 2. 先校验短信验证码：与 Redis 中存储的不一致直接拒绝；
+        //    校验成功后立即消费（删除），防止同一验证码被重复使用
+        verifyPhoneCode(phone, smsCode);
+
+        // 3. 验证码通过后再走微信登录，用 loginCode 换取 openid
+        WxSessionVO session = wechatService.code2session(dto.getLoginCode());
+        SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getOpenid, session.getOpenid()));
+        boolean isNewUser = false;
+        if (user == null) {
+            user = registerByOpenid(session);
+            isNewUser = true;
+        }
+
+        // 4. 绑定手机号：手机号已被其他微信账号绑定时拒绝登录
+        bindPhone(user, phone);
+
+        // 5. 缓存 session_key，用于后续解密手机号（7 天过期）
+        if (StrUtils.isNotBlank(session.getSessionKey())) {
+            stringRedisTemplate.opsForValue().set(WX_SESSION_PREFIX + user.getId(), session.getSessionKey(), 7, TimeUnit.DAYS);
+        }
+
+        // 6. 签发双 token 返回
+        return generateTokens(user, isNewUser);
+    }
+
+    /**
+     * 将手机号绑定到当前用户：已绑定其他用户则报错；本用户已绑定则幂等返回；
+     * 注册时创建的空手机号记录优先复用更新，否则新增绑定记录。
+     */
+    private void bindPhone(SysUser user, String phone) {
+        Long phoneLong = Long.parseLong(phone);
+
+        SysUserPhone bound = sysUserPhoneMapper.selectOne(
+                new LambdaQueryWrapper<SysUserPhone>().eq(SysUserPhone::getPhone, phoneLong));
+        if (bound != null) {
+            if (!bound.getUserId().equals(user.getId())) {
+                log.warn("手机号绑定冲突, phone: {}, 已绑定 userId: {}, 当前 userId: {}", phone, bound.getUserId(), user.getId());
+                throw new BusinessException("该手机号已绑定其他微信账号");
+            }
+            return;
+        }
+
+        SysUserPhone own = sysUserPhoneMapper.selectOne(
+                new LambdaQueryWrapper<SysUserPhone>()
+                        .eq(SysUserPhone::getUserId, user.getId())
+                        .isNull(SysUserPhone::getPhone));
+        if (own != null) {
+            own.setPhone(phoneLong);
+            sysUserPhoneMapper.updateById(own);
+        } else {
+            SysUserPhone record = new SysUserPhone();
+            record.setUserId(user.getId());
+            record.setPhone(phoneLong);
+            record.setStatus(1);
+            sysUserPhoneMapper.insert(record);
+        }
+
+        log.info("手机号绑定成功, userId: {}, phone: {}", user.getId(), phone);
     }
 
     // ==================== 短信验证码 ====================

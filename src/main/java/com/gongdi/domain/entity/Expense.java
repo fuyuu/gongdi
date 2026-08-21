@@ -1,5 +1,8 @@
 package com.gongdi.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,9 +20,11 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@TableName("expense")
 public class Expense {
 
-    /** 主键 */
+    /** 主键，使用雪花算法生成 */
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 报销单号 */

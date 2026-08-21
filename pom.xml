@@ -125,6 +125,12 @@
             <version>5.8.40</version>
         </dependency>
 
+        <!-- 测试：JUnit 5 + Spring Boot Test，src/test 下已有测试类依赖此注解 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 
